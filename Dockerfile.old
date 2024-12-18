@@ -1,0 +1,20 @@
+FROM oven/bun:1 AS base
+WORKDIR /usr/
+
+# Building UI to create static site
+FROM base as ui-builder
+COPY package.json bun.lockb index.html tsconfig* vite.config.ts /usr/
+COPY ./src /usr/
+RUN bun install
+RUN bun run build
+
+FROM base AS server
+RUN mkdir -p /server
+COPY --from=ui-builder /app /usr/
+COPY package.json bun.lockb  /usr/server/
+RUN cd /server && bun install --production
+
+EXPOSE 3000
+
+CMD ["bun", "run", "start"]
+
